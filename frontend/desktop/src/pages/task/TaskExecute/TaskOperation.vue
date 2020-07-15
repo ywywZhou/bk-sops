@@ -54,9 +54,9 @@
                 </TemplateCanvas>
             </div>
         </div>
-        <transition name="slideRight">
-            <!-- 执行详情 -->
-            <div class="node-info-panel" ref="nodeInfoPanel" v-if="isNodeInfoPanelShow">
+        <bk-sideslider :is-show.sync="isNodeInfoPanelShow" :width="798" :show-mask="false">
+            <div slot="header">{{silesLiderTitle}}</div>
+            <div class="node-info-panel" ref="nodeInfoPanel" slot="content">
                 <ModifyParams
                     v-if="nodeInfoType === 'modifyParams'"
                     :params-can-be-modify="paramsCanBeModify"
@@ -74,6 +74,7 @@
                     :selected-flow-path="selectedFlowPath"
                     :tree-node-config="treeNodeConfig"
                     :admin-view="adminView"
+                    :default-active-id="defaultActiveId"
                     :node-detail-config="nodeDetailConfig"
                     @onClickTreeNode="onClickTreeNode">
                 </ExecuteInfo>
@@ -93,11 +94,8 @@
                     v-if="nodeInfoType === 'taskExecuteInfo'"
                     :task-id="instance_id">
                 </TaskInfo>
-                <div class="close-node-info-panel" @click="onToggleNodeInfoPanel">
-                    <i class="common-icon-double-arrow"></i>
-                </div>
             </div>
-        </transition>
+        </bk-sideslider>
         <gatewaySelectDialog
             :is-gateway-select-dialog-show="isGatewaySelectDialogShow"
             :gateway-branches="gatewayBranches"
@@ -191,6 +189,8 @@
             })
 
             return {
+                defaultActiveId: '',
+                silesLiderTitle: '',
                 locations: [],
                 setNodeDetail: true,
                 hasParentNode: true,
@@ -661,15 +661,15 @@
             setTaskNodeStatus (id, data) {
                 this.$refs.templateCanvas && this.$refs.templateCanvas.onUpdateNodeInfo(id, data)
             },
-            async setNodeDetailConfig (id, boolean) {
+            async setNodeDetailConfig (id, performState = true, firstNodeData) {
                 this.hasParentNode = true
-                const nodeActivities = this.pipelineData.activities[id]
+                const nodeActivities = firstNodeData || this.pipelineData.activities[id]
                 let subprocessStack = []
                 if (this.selectedFlowPath.length > 1) {
                     subprocessStack = this.selectedFlowPath.map(item => item.nodeId).slice(1)
                 }
                 this.setNodeDetail = true
-                if (boolean) {
+                if (performState) {
                     this.nodeDetailConfig = {
                         component_code: nodeActivities.component.code,
                         version: nodeActivities.component.version || 'legacy',
@@ -711,6 +711,7 @@
             },
             onRetryClick (id) {
                 this.isNodeInfoPanelShow = true
+                this.silesLiderTitle = i18n.t('重试')
                 this.nodeInfoType = 'retryNode'
                 this.setNodeDetailConfig(id)
             },
@@ -831,7 +832,20 @@
                 this.$refs.templateCanvas.onUpdateNodeInfo(id, { isActived })
             },
             // 查看参数、修改参数
-            onTaskParamsClick (type) {
+            onTaskParamsClick (type, name) {
+                let nodeData = tools.deepClone(this.nodeData)
+                let firstNodeId = null
+                let firstNodeData = null
+                while (nodeData[0]) {
+                    if (nodeData[0].type && nodeData[0].type === 'ServiceActivity') {
+                        firstNodeId = nodeData[0].id
+                        firstNodeData = nodeData[0]
+                        nodeData[0] = false
+                    } else {
+                        nodeData = nodeData[0].children
+                    }
+                }
+                this.silesLiderTitle = i18n.t(name)
                 if (this.nodeInfoType === type) {
                     this.isNodeInfoPanelShow = false
                     this.nodeInfoType = ''
@@ -839,6 +853,8 @@
                     this.isNodeInfoPanelShow = true
                     this.nodeInfoType = type
                 }
+                this.defaultActiveId = firstNodeId
+                this.setNodeDetailConfig(firstNodeId, true, firstNodeData)
             },
             
             onToggleNodeInfoPanel () {
@@ -871,6 +887,7 @@
                 this[actionType]()
             },
             onNodeClick (id, type) {
+                this.defaultActiveId = id
                 if (type === 'tasknode') {
                     this.handleSingleNodeClick(id, 'singleAtom')
                 } else if (type === 'subflow') {
@@ -912,6 +929,7 @@
                         subprocess_stack: JSON.stringify(subprocessStack)
                     }
                     this.updateNodeActived(id, true)
+                    this.silesLiderTitle = i18n.t('节点详情')
                 }
             },
             handleSubflowAtomClick (id) {
@@ -962,7 +980,6 @@
                     name: this.instanceName,
                     nodeId: this.completePipelineData.id
                 }]
-               
                 const heirarchyList = nodeHeirarchy.split('.').reverse().splice(1)
                 if (heirarchyList.length) { // not root node
                     nodeActivities = this.completePipelineData.activities
@@ -1004,12 +1021,12 @@
                     }
                 } else {
                     this.selectedFlowPath = nodePath
-                    await this.switchCanvasView(this.completePipelineData, true)
-                    this.treeNodeConfig = {}
+                    if (nodeType !== 'subflow') {
+                        await this.switchCanvasView(this.completePipelineData, true)
+                        this.treeNodeConfig = {}
+                    }
                 }
-                if (nodeType === 'subflow') {
-                    this.hasParentNode = false
-                } else {
+                if (nodeType === 'tasknode') {
                     const nodeStatus = this.locations.find(item => item.id === selectNodeId)
                     if (nodeStatus.status) {
                         this.setNodeDetailConfig(selectNodeId, true)
@@ -1222,37 +1239,11 @@
     }
 
 }
+/deep/.bk-sideslider-content {
+    height: calc(100% - 60px);
+}
 .node-info-panel {
-    position: absolute;
-    top: 50px;
-    right: 0;
-    width: 798px;
-    height: calc(100% - 50px);
-    background: $whiteDefault;
-    border-top: 1px solid #dde4eb;
-    border-left: 1px solid #dde4eb;
-    z-index: 5;
-    .close-node-info-panel {
-        position: absolute;
-        top: -1px;
-        left: -18px;
-        width: 18px;
-        height: 50px;
-        line-height: 50px;
-        font-size: 12px;
-        color: $whiteDefault;
-        text-align: center;
-        background:#3a84ff;
-        border-right: none;
-        border-radius: 4px;
-        border-top-right-radius: 0;
-        border-bottom-right-radius: 0;
-        box-shadow: -1px 1px 8px rgba(60, 150, 255, .25), 1px -1px 8px rgba(60, 150, 255, .25);
-        cursor: pointer;
-        &:hover {
-            background: $blueDefault;
-        }
-    }
+    height: 100%;
 }
 
 </style>

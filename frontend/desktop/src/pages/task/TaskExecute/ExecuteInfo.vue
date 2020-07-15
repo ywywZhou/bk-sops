@@ -15,6 +15,7 @@
             class="nodeTree"
             :data="nodeData"
             :selected-flow-path="selectedFlowPath"
+            :default-active-id="defaultActiveId"
             @onSelectNode="onSelectNode">
         </NodeTree>
         <div
@@ -406,6 +407,10 @@
             setNodeDetail: {
                 type: Boolean,
                 default: true
+            },
+            defaultActiveId: {
+                type: String,
+                default: ''
             }
         },
         data () {
