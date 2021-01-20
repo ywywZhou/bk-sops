@@ -54,7 +54,7 @@
                                 </div>
                                 <bk-table :data="variableList" :outer-border="false" :max-height="400">
                                     <bk-table-column :label="$t('名称')" prop="name" width="165" :show-overflow-tooltip="true"></bk-table-column>
-                                    <bk-table-column label="KEY" :show-overflow-tooltip="true" :width="isChange ? '165' : ''">
+                                    <bk-table-column label="KEY" :show-overflow-tooltip="true" width="209">
                                         <template slot-scope="props" width="165">
                                             <div class="key">{{ props.row.key }}</div>
                                             <i class="copy-icon common-icon-double-paper-2" @click="onCopyKey(props.row.key)"></i>
@@ -863,6 +863,7 @@
                     this.isChange = true
                     this.$set(this.localConstants, data.key, data)
                 } else {
+                    this.isChange = false
                     this.setVariableSourceInfo(data)
                 }
             },
@@ -1223,7 +1224,7 @@
         .list-change {
             /deep/ .bk-table-body-wrapper {
                 overflow-y: scroll;
-                padding-bottom: 27px;
+                padding-bottom: 25px;
             }
         }
         td {
