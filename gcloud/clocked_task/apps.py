@@ -14,15 +14,6 @@ specific language governing permissions and limitations under the License.
 from django.apps import AppConfig
 
 
-class IamAuthConfig(AppConfig):
-    name = "gcloud.iam_auth"
-
-    def ready(self):
-        from gcloud.iam_auth.resource_creator_action import (  # noqa
-            common_flow,
-            flow,
-            mini_app,
-            periodic_task,
-            clocked_task,
-        )
-        from gcloud.iam_auth.signals.handlers import user_enter_handler  # noqa
+class ClockedTaskConfig(AppConfig):
+    name = "gcloud.clocked_task"
+    verbose_name = "ClockedTaskConfig"

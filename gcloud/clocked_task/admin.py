@@ -11,18 +11,21 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 
-from django.apps import AppConfig
+from django.contrib import admin
+
+from gcloud.clocked_task.models import ClockedTask
 
 
-class IamAuthConfig(AppConfig):
-    name = "gcloud.iam_auth"
-
-    def ready(self):
-        from gcloud.iam_auth.resource_creator_action import (  # noqa
-            common_flow,
-            flow,
-            mini_app,
-            periodic_task,
-            clocked_task,
-        )
-        from gcloud.iam_auth.signals.handlers import user_enter_handler  # noqa
+@admin.register(ClockedTask)
+class ClockedTaskAdmin(admin.ModelAdmin):
+    list_display = [
+        "task_id",
+        "task_name",
+        "project_id",
+        "plan_start_time",
+        "task_params",
+        "template_id",
+        "template_name",
+        "clocked_task_id",
+    ]
+    search_field = ["task_name", "template_name", "task_id", "template_id"]
