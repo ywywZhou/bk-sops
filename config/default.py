@@ -102,6 +102,7 @@ INSTALLED_APPS += (
     "drf_yasg",
     "plugin_service",
     "django_dbconn_retry",
+    "blueapps.opentelemetry.instrument_app",
 )
 
 # 这里是默认的中间件，大部分情况下，不需要改动
@@ -169,7 +170,7 @@ LOGGING = get_logging_config_dict(locals())
 # Django模板中：<script src="/a.js?v="></script>
 # mako模板中：<script src="/a.js?v=${ STATIC_VERSION }"></script>
 # 如果静态资源修改了以后，上线前改这个版本号即可
-STATIC_VERSION = "3.9.14"
+STATIC_VERSION = "3.9.16"
 
 STATICFILES_DIRS = [os.path.join(BASE_DIR, "static")]
 
@@ -636,3 +637,7 @@ def monitor_report_config():
 # 自定义上报监控配置
 if env.BK_MONITOR_REPORT_ENABLE:
     monitor_report_config()
+
+ENABLE_OTEL_TRACE = env.ENABLE_OTEL_TRACE
+
+BK_APP_OTEL_INSTRUMENT_DB_API = env.BK_APP_OTEL_INSTRUMENT_DB_API
