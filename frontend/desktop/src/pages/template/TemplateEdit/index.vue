@@ -38,6 +38,12 @@
                 @onSaveTemplate="onSaveTemplate">
             </TemplateHeader>
             <template v-if="isEditProcessPage">
+                <bk-alert type="info" v-if="isViewMode && isAlertTipsShow">
+                    <div slot="title">
+                        <span>{{ $t('当前仅能查看流程，可从右上角进入【编辑】。') }}</span>
+                        <bk-button text @click="isAlertTipsShow = false">{{ $t('不再提示') }}</bk-button>
+                    </div>
+                </bk-alert>
                 <SubflowUpdateTips
                     v-if="subflowShouldUpdated.length > 0"
                     class="update-tips"
@@ -310,7 +316,8 @@
                 validateConnectFailList: [], // 节点校验失败列表
                 isPerspective: false, // 流程是否透视
                 nodeVariableInfo: {}, // 节点输入输出变量
-                isMultipleTabCount: 0
+                isMultipleTabCount: 0,
+                isAlertTipsShow: true
             }
         },
         computed: {
@@ -1855,6 +1862,11 @@
         overflow: hidden;
         z-index: 4;
         transition: left 0.5s ease;
+    }
+    /deep/.bk-alert-info {
+        .icon-info {
+            line-height: 22px;
+        }
     }
     .pipeline-canvas-wrapper {
         height: 100%;
