@@ -278,7 +278,7 @@
 </template>
 <script>
     import i18n from '@/config/i18n/index.js'
-    import { mapActions, mapState, mapMutations } from 'vuex'
+    import { mapActions, mapState, mapGetters, mapMutations } from 'vuex'
     import atomFilter from '@/utils/atomFilter.js'
     import tools from '@/utils/tools.js'
     import BasicInfo from './BasicInfo.vue'
@@ -290,6 +290,7 @@
     import NoData from '@/components/common/base/NoData.vue'
     import bus from '@/utils/bus.js'
     import permission from '@/mixins/permission.js'
+    import tplHistory from '@/utils/tplHistory.js'
     export default {
         name: 'NodeConfig',
         components: {
@@ -469,6 +470,9 @@
                 'addVariable',
                 'setConstants',
                 'setOutputs'
+            ]),
+            ...mapGetters('template/', [
+                'getPipelineTree'
             ]),
             async initDefaultData () {
                 const nodeConfig = tools.deepClone(this.activities[this.nodeId])
@@ -1533,6 +1537,13 @@
                         this.$emit('updateNodeInfo', this.nodeId, nodeData)
                         this.$emit('templateDataChanged')
                         this.$emit('close')
+                        this.$nextTick(() => {
+                            // 添加模板历史
+                            let pipelineData = this.getPipelineTree(false)
+                            console.log(pipelineData, '我是节点编辑')
+                            pipelineData = JSON.stringify(pipelineData)
+                            tplHistory.push(pipelineData)
+                        })
                     }
                 })
             },

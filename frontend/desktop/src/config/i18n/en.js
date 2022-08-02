@@ -1428,7 +1428,8 @@ const en = {
     'ID/任务名/所属项目/创建人/执行人/状态': 'ID/TaskName/Project/Creator/Executor/Status',
     'ID/流程名称/标签/子流程更新/创建人/更新人': 'ID/FlowName/Label/SubprocessUpdated/Creator/Editor',
     '最近搜索': 'Recent searches',
-    '查询无数据': 'Query no data'
+    '查询无数据': 'Query no data',
+    '重做': 'Redo'
 }
 
 export default en

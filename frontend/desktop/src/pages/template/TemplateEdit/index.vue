@@ -217,6 +217,7 @@
     import TaskSelectNode from '../../task/TaskCreate/TaskSelectNode.vue'
     import BatchUpdateDialog from './BatchUpdateDialog.vue'
     import DealVarDirtyData from '@/utils/dealVarDirtyData.js'
+    import tplHistory from '@/utils/tplHistory.js'
 
     export default {
         name: 'TemplateEdit',
@@ -461,6 +462,8 @@
             window.removeEventListener('unload', this.handleUnload, false)
             this.resetTemplateData()
             this.hideGuideTips()
+            // 清除模板记录
+            tplHistory.clear()
         },
         methods: {
             ...mapActions('template/', [
@@ -610,6 +613,11 @@
                         templateData.name = templateData.name.slice(0, STRING_LENGTH.TEMPLATE_NAME_MAX_LENGTH - 6) + '_clone'
                     }
                     this.setTemplateData(templateData)
+                    // 记录模板初始数据
+                    if (['edit', 'clone'].includes(this.type)) {
+                        tplHistory.clear()
+                        this.setTplInitData()
+                    }
                 } catch (e) {
                     if (e.status === 404) {
                         this.$router.push({ name: 'notFoundPage' })
@@ -1250,6 +1258,11 @@
                                 message: i18n.t('排版完成，原内容在本地快照中'),
                                 theme: 'success'
                             })
+                            // 添加模板历史
+                            let pipelineData = this.getPipelineTree(false)
+                            pipelineData = JSON.stringify(pipelineData)
+                            tplHistory.push(pipelineData)
+                            console.log('我是排版')
                         })
                     }
                 } catch (e) {
@@ -1810,6 +1823,14 @@
             },
             setMultipleTabCount () {
                 this.isMultipleTabCount = tplTabCount.getCount(this.getTplTabData())
+            },
+            // 记录模板初始数据
+            setTplInitData () {
+                let pipelineData = this.getPipelineTree(false)
+                console.log(pipelineData)
+                pipelineData = JSON.stringify(pipelineData)
+                tplHistory.init(pipelineData)
+                console.log(tplHistory)
             }
         },
         beforeRouteLeave (to, from, next) { // leave or reload page

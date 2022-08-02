@@ -18,6 +18,7 @@
             selector="entry-item"
             class="canvas-wrapper"
             :data="flowData"
+            :key="renderKey"
             :show-palette="showPalette"
             :show-tool="showTool"
             :editable="editable"
@@ -67,6 +68,7 @@
                     @onToggleAllNode="onToggleAllNode"
                     @onToggleHotKeyInfo="onToggleHotKeyInfo"
                     @onTogglePerspective="onTogglePerspective"
+                    @onToggleUndoRedo="onToggleUndoRedo"
                     @onDownloadCanvas="onDownloadCanvas">
                 </tool-panel>
             </template>
@@ -145,6 +147,8 @@
     import { NODES_SIZE_POSITION } from '@/constants/nodes.js'
     import { endpointOptions, connectorOptions, nodeOptions } from './options.js'
     import validatePipeline from '@/utils/validatePipeline.js'
+    import { mapGetters, mapMutations } from 'vuex'
+    import tplHistory from '@/utils/tplHistory.js'
 
     export default {
         name: 'TemplateCanvas',
@@ -286,7 +290,10 @@
                 connectorOptions,
                 nodeOptions,
                 zoomRatio: 100,
-                labelDrag: false // 标识分支条件是否为拖动触发
+                labelDrag: false, // 标识分支条件是否为拖动触发
+                isNodeInit: true,
+                isNodeEditing: false,
+                renderKey: new Date().getTime()
             }
         },
         watch: {
@@ -312,6 +319,7 @@
             canvasPaintArea.addEventListener('mousemove', this.onCanvasMouseMove, false)
             // 监听页面视图变化
             window.addEventListener('resize', this.onWindowResize, false)
+            this.isNodeInit = false
         },
         beforeDestroy () {
             this.$refs.jsFlow.$el.removeEventListener('mousemove', this.pasteMousePosHandler)
@@ -328,6 +336,12 @@
             window.removeEventListener('resize', this.onWindowResize, false)
         },
         methods: {
+            ...mapGetters('template/', [
+                'getPipelineTree'
+            ]),
+            ...mapMutations('template/', [
+                'resetPipelineTree'
+            ]),
             handlerWindowResize () {
                 this.windowWidth = document.documentElement.offsetWidth - 60
                 this.windowHeight = document.documentElement.offsetHeight - 60 - 50
@@ -467,6 +481,9 @@
                     this.$refs.jsFlow.addNodesToDragSelection(selectedIds)
                     this.selectedNodes = locations
                 })
+                // 添加模板历史
+                this.setTplHistory()
+                console.log('我是复制节点')
             },
             // 获取复制节点、连线数据
             createCopyOfSelectedNodes (nodes) {
@@ -595,6 +612,11 @@
                 } else if (node.type === 'endpoint') {
                     this.isDisableEndPoint = true
                 }
+                if (!this.isNodeInit) { // 节点初始化时不记录模板历史
+                    // 添加模板历史
+                    this.setTplHistory()
+                    console.log('我是创建节点')
+                }
             },
             // 拖拽到节点上自动连接
             onConnectionDragStop (source, targetId, event) {
@@ -631,6 +653,9 @@
                 if (validateMessage.result) {
                     this.$emit('onLineChange', 'add', line)
                     this.$refs.jsFlow.createConnector(line)
+                    // 添加模板历史
+                    this.setTplHistory()
+                    console.log('我是拖拽到节点上自动连接')
                 } else {
                     this.$bkMessage({
                         message: validateMessage.message,
@@ -747,6 +772,9 @@
                     if (validateMessage.result) {
                         this.$emit('onLineChange', 'add', data)
                         this.$emit('templateDataChanged')
+                        // 添加模板历史
+                        this.setTplHistory()
+                        console.log('我是拖拽到端点上连接')
                         return true
                     } else {
                         this.$bkMessage({
@@ -830,6 +858,10 @@
                 }
                 this.$emit('templateDataChanged')
                 this.$emit('onLineChange', 'delete', line)
+                if (!this.isNodeEditing) {
+                    this.setTplHistory()
+                    console.log('我是删除连线')
+                }
             },
             onNodeMoveStop (loc) {
                 this.$emit('templateDataChanged')
@@ -849,6 +881,9 @@
                 } else {
                     this.$emit('onLocationMoveDone', loc)
                 }
+                this.isNodeEditing = false
+                this.setTplHistory()
+                console.log('我是移动节点')
             },
             onOverlayClick (overlay, e) {
                 // 点击 overlay 类型
@@ -874,6 +909,7 @@
                 }
             },
             onNodeRemove (node) {
+                this.isNodeEditing = true
                 this.$refs.jsFlow.removeNode(node)
                 this.$emit('templateDataChanged')
                 this.$emit('onLocationChange', 'delete', node)
@@ -883,6 +919,10 @@
                 } else if (node.type === 'endpoint') {
                     this.isDisableEndPoint = false
                 }
+                // 添加模板历史
+                this.setTplHistory()
+                console.log('我是删除节点')
+                this.isNodeEditing = false
             },
             onBeforeDrag (data) {
                 if (this.referenceLine.id && this.referenceLine.id === data.sourceId) {
@@ -891,6 +931,7 @@
             },
             // 节点拖动回调
             onNodeMoving (node) {
+                this.isNodeEditing = true
                 // 在有参考线的情况下，拖动参考线来源节点，将移出参考线
                 if (this.referenceLine.id && this.referenceLine.id === node.id) {
                     this.clearReferenceLine()
@@ -1097,6 +1138,23 @@
                 this.isPerspective = !this.isPerspective
                 this.$emit('onTogglePerspective', this.isPerspective)
             },
+            onToggleUndoRedo (type) {
+                let result = null
+                if (type === 'undo') {
+                    result = tplHistory.undo()
+                } else {
+                    result = tplHistory.redo()
+                }
+                if (result === false) return
+                this.isNodeInit = true
+                const data = JSON.parse(tplHistory.currentValue)
+                console.log(data)
+                this.resetPipelineTree(data)
+                this.renderKey = new Date().getTime()
+                this.$nextTick(() => {
+                    this.isNodeInit = false
+                })
+            },
             onCloseHotkeyInfo () {
                 this.isShowHotKey = false
             },
@@ -1275,6 +1333,7 @@
              * @param {Object} location -新建节点的 location
              */
             onInsertNode ({ startNodeId, endNodeId, location, isFillParam }) {
+                this.isNodeEditing = true
                 const type = isFillParam ? 'copy' : 'add'
                 const deleteLine = this.canvasData.lines.find(line => line.source.id === startNodeId && line.target.id === endNodeId)
                 if (!deleteLine) {
@@ -1311,6 +1370,7 @@
                     this.activeNode = location
                     this.openShortcutPanel('node')
                 })
+                this.isNodeEditing = false
             },
             // 通过快捷面板删除连线
             onShortcutDeleteLine () {
@@ -1635,6 +1695,14 @@
                         }
                     }
                 })
+            },
+            // 添加模板历史
+            setTplHistory () {
+                let pipelineData = this.getPipelineTree(false)
+                console.log(pipelineData)
+                pipelineData = JSON.stringify(pipelineData)
+                tplHistory.push(pipelineData)
+                console.log(tplHistory)
             }
         }
     }

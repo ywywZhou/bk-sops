@@ -119,11 +119,36 @@
                 @click="onTogglePerspective">
                 <i class="common-icon-perspective"></i>
             </div>
+            <div
+                :class="['tool-icon', {
+                    'disable': !undoRedoMap.undoStack.length
+                }]"
+                v-bk-tooltips="{
+                    content: $t('撤销'),
+                    delay: 300,
+                    placements: ['bottom']
+                }"
+                @click="onTemplateUndo">
+                <i class="common-icon-revoke"></i>
+            </div>
+            <div
+                :class="['tool-icon', {
+                    'disable': !undoRedoMap.redoStack.length
+                }]"
+                v-bk-tooltips="{
+                    content: $t('重做'),
+                    delay: 300,
+                    placements: ['bottom']
+                }"
+                @click="onTemplateRedo">
+                <i class="common-icon-redo"></i>
+            </div>
         </div>
     </transition>
 </template>
 <script>
     import i18n from '@/config/i18n/index.js'
+    import tplHistory from '@/utils/tplHistory.js'
 
     export default {
         name: 'ToolPanel',
@@ -165,6 +190,11 @@
                 default: false
             }
         },
+        data () {
+            return {
+                undoRedoMap: tplHistory
+            }
+        },
         computed: {
             selectNodeName () {
                 return this.isAllSelected ? i18n.t('全选') : i18n.t('反选')
@@ -197,6 +227,12 @@
             },
             onTogglePerspective () {
                 this.$emit('onTogglePerspective')
+            },
+            onTemplateUndo () {
+                this.$emit('onToggleUndoRedo', 'undo')
+            },
+            onTemplateRedo () {
+                this.$emit('onToggleUndoRedo', 'redo')
             }
         }
     }
@@ -234,6 +270,10 @@
             color: #3a84ff;
             background: #f4f7ff;
             border-radius: 1px;
+        }
+        &.disable {
+            color: #dcdee5;
+            cursor: not-allowed;
         }
         .tool-disable {
             cursor: not-allowed;

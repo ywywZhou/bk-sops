@@ -299,6 +299,16 @@ const template = {
                 state[key] = val
             })
         },
+        resetPipelineTree (state, data) {
+            const pipelineTreeOrder = [
+                'activities', 'constants', 'end_event', 'flows', 'gateways',
+                'line', 'location', 'outputs', 'start_event'
+            ]
+            pipelineTreeOrder.forEach((key) => {
+                const val = data[key]
+                state[key] = val
+            })
+        },
         // 更新模板各相关字段数据
         setTemplateData (state, data) {
             const {
@@ -1020,21 +1030,24 @@ const template = {
         getLocalTemplateData (state) {
             return tools.deepClone(state)
         },
-        getPipelineTree (state) {
+        getPipelineTree (state, filter = true) {
             const {
                 activities, constants, end_event, flows, gateways,
                 line, location, outputs, start_event
             } = state
-            // 剔除 location 的冗余字段
-            const pureLocation = location.map(item => ({
-                id: item.id,
-                type: item.type,
-                name: item.name,
-                stage_name: item.stage_name,
-                status: item.status,
-                x: item.x,
-                y: item.y
-            }))
+            let pureLocation = location
+            if (filter) {
+                // 剔除 location 的冗余字段
+                pureLocation = location.map(item => ({
+                    id: item.id,
+                    type: item.type,
+                    name: item.name,
+                    stage_name: item.stage_name,
+                    status: item.status,
+                    x: item.x,
+                    y: item.y
+                }))
+            }
             return {
                 activities,
                 constants,
