@@ -99,6 +99,7 @@
             }
         },
         created () {
+            console.log('this is bk-sops')
             window.msg_list = []
             bus.$on('showLoginModal', args => {
                 const { has_plain, login_url, width, height, method } = args
