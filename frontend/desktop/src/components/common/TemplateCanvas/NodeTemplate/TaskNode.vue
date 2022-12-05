@@ -37,7 +37,6 @@
                 <bk-checkbox
                     v-else-if="node.mode === 'select'"
                     :value="node.checked"
-                    :disabled="node.checkDisable"
                     @change="onNodeCheckClick">
                 </bk-checkbox>
             </template>
@@ -149,9 +148,6 @@
                 return 'common-icon-sys-default'
             },
             onNodeCheckClick () {
-                if (this.node.checkDisable) {
-                    return
-                }
                 this.$emit('onNodeCheckClick', this.node.id, !this.node.checked)
             }
         }

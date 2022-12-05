@@ -165,7 +165,9 @@
                 isDefaultSchemeIng: false,
                 schemeInfo: null,
                 prevSelectedNodes: [],
-                isEditSchemeShow: false
+                isEditSchemeShow: false,
+                branchNodes: [], // 分支上的节点
+                branchSinkNodes: [] // 查找过程中分支的变化
             }
         },
         computed: {
@@ -175,6 +177,7 @@
                 'line': state => state.template.line,
                 'constants': state => state.template.constants,
                 'gateways': state => state.template.gateways,
+                'endNode': state => state.template.end_event,
                 'taskScheme': state => state.task.taskScheme,
                 'app_id': state => state.app_id,
                 'viewMode': state => state.view_mode,
@@ -447,16 +450,77 @@
                         return true
                     }
                 })
+                const includeNodes = [id]
+                // 网关节点取消/勾选
+                if (id in this.gateways) {
+                    this.branchNodes = new Set()
+                    this.branchSinkNodes = new Set()
+                    // 拿到网关各条分支上的所有任务节点
+                    this.getBranchNodes(id)
+                    if (this.branchSinkNodes.size > 1) {
+                        this.branchSinkNodes.forEach(sinkId => {
+                            if (this.activities[sinkId]) {
+                                this.branchNodes.add(sinkId)
+                            }
+                            this.getBranchNodes(sinkId, sinkId)
+                        })
+                    }
+                    this.branchNodes.forEach(nodeId => {
+                        includeNodes.push(nodeId)
+                    })
+                }
                 if (!val) {
                     this.isAllSelected = false
-                    this.selectedNodes = this.selectedNodes.filter(item => item !== id)
+                    this.selectedNodes = this.selectedNodes.filter(item => !includeNodes.includes(item))
                 } else {
                     if (this.selectedNodes.length === this.allSelectableNodes.length - 1) {
                         this.isAllSelected = true
                     }
-                    this.selectedNodes.push(id)
+                    this.selectedNodes.push(...includeNodes)
                 }
-                this.updateExcludeNodes()
+                this.updateDataAndCanvas()
+            },
+            /**
+             * id 起始节点
+             * firstId 分支上首个节点
+             */
+            getBranchNodes (id, firstId) {
+                const targetIds = this.line.reduce((acc, cur) => {
+                    if (cur.source.id === id) {
+                        acc.push(cur.target.id)
+                    }
+                    return acc
+                }, [])
+                if (targetIds.length > 1) {
+                    if (this.branchSinkNodes.has(firstId)) {
+                        this.branchSinkNodes.delete(firstId)
+                    }
+                    targetIds.forEach(targetId => {
+                        if (!this.branchSinkNodes.has(targetId)) {
+                            this.branchSinkNodes.add(targetId)
+                        }
+                        this.getBranchNodes(targetId, targetId)
+                    })
+                } else if (targetIds.length === 1) {
+                    // 如果该节点有多个输入连线则不继续查找
+                    const targetId = targetIds[0]
+                    const { incoming = [] } = this.activities[id] || this.gateways[id] || {}
+                    if (incoming.length <= 1) {
+                        this.branchNodes.add(id)
+                        if (this.endNode.id === targetId) {
+                            this.branchSinkNodes.delete(firstId)
+                            this.branchSinkNodes.add(targetId)
+                        } else {
+                            this.getBranchNodes(targetId, firstId)
+                        }
+                    } else {
+                        if (this.activities[id]) {
+                            this.branchNodes.add(id)
+                        }
+                        this.branchSinkNodes.delete(firstId)
+                        this.branchSinkNodes.add(targetId)
+                    }
+                }
             },
             /**
              * 点击预览模式下的面包屑
@@ -532,7 +596,8 @@
                     return acc
                 }, [])
                 const selectedNodes = Array.from(new Set(selectNodeAll))
-                this.selectedNodes = selectedNodes.length ? selectedNodes : Object.keys(this.activities) // 默认全选
+                const defaultSelectedAll = [...Object.keys(this.activities), ...Object.keys(this.gateways)]
+                this.selectedNodes = selectedNodes.length ? selectedNodes : defaultSelectedAll // 默认全选
                 this.updateDataAndCanvas()
             },
             /**

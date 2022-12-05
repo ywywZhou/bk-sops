@@ -292,6 +292,12 @@ const template = {
                                     }
                                 })
                                 return loc
+                            } else if (item.type.indexOf('gateway') > -1) {
+                                const loc = Object.assign({}, item, {
+                                    optional: true,
+                                    checked: true
+                                })
+                                return loc
                             }
                             return item
                         })
