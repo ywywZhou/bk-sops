@@ -21,7 +21,8 @@
             resize="none"
             :placeholder="placeholder">
         </el-input>
-        <span v-show="!validateInfo.valid" class="common-error-tip error-info">{{validateInfo.message}}</span>
+        <!--编辑式表格内组件不展示校验失败-->
+        <span v-show="!validateInfo.valid && !formTable" class="common-error-tip error-info">{{validateInfo.message}}</span>
     </div>
 </template>
 <script>
@@ -45,6 +46,11 @@
             required: false,
             default: '',
             desc: 'placeholder'
+        },
+        formTable: {
+            type: Boolean,
+            required: false,
+            default: false
         }
     }
     export default {
@@ -72,6 +78,11 @@
                 this.$nextTick(() => {
                     this.$refs.tagTextarea.resizeTextarea()
                 })
+            }
+        },
+        methods: {
+            onFocus () {
+                this.$refs.tagTextarea.focus()
             }
         }
     }

@@ -477,6 +477,12 @@
                 }
                 return true
             },
+            onFocusForm () {
+                this.$refs.tagComponent.onFocus()
+            },
+            getValidateInfo () {
+                return this.$refs.tagComponent.validateInfo
+            },
             handleFoldUsedTip () {
                 this.$refs['htmlUsedTipPopper'].hideHandler()
                 this.scheme.attrs.html_used_tip = false

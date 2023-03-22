@@ -49,49 +49,14 @@
                 <bk-link theme="primary" @click="updateDiffData">{{ $t('确认') }}</bk-link>
             </div>
         </bk-alert>
-        <div class="data-table">
-            <bk-table
-                v-if="!loading"
-                :data="dataList"
-                :pagination="pagination"
-                @page-change="handlePageChange">
-                <bk-table-column
-                    v-for="(item, colIndex) in cols"
-                    :key="item.config.tag_code"
-                    :label="item.config.attrs.name"
-                    :min-width="item.width"
-                    :index="colIndex"
-                    show-overflow-tooltip
-                    :render-header="renderTableHeader"
-                    :prop="item.config.tag_code"
-                    :fixed="item.config.tag_code === 'tb_btns' ? 'right' : false"
-                    :align="item.config.tag_code === 'tb_btns' ? 'center' : 'left'">
-                    <template slot-scope="props">
-                        <template v-if="item.config.tag_code !== 'tb_btns'">
-                            <render-form
-                                :ref="`row_${(pagination.current - 1) * pagination.limit + props.$index}_${item.config.tag_code}`"
-                                :scheme="[item.config]"
-                                :form-option="getCellOption((pagination.current - 1) * pagination.limit + props.$index)"
-                                v-model="props.row[item.config.tag_code]">
-                            </render-form>
-                        </template>
-                        <template v-else>
-                            <template v-if="editRow !== (pagination.current - 1) * pagination.limit + props.$index">
-                                <bk-button :text="true" :disabled="!editable" @click="rowEditClick(props)">{{ i18n.edit }}</bk-button>
-                                <bk-button :text="true" :disabled="!editable" @click="rowDelClick(props)">{{ i18n.delete }}</bk-button>
-                            </template>
-                            <template v-else>
-                                <bk-button :text="true" :disabled="!editable" @click="rowSaveClick(props, item.config.tag_code)">{{ i18n.save }}</bk-button>
-                                <bk-button :text="true" :disabled="!editable" @click="rowCancelClick">{{ i18n.cancel }}</bk-button>
-                            </template>
-                        </template>
-                    </template>
-                </bk-table-column>
-                <template v-slot:empty>
-                    <no-data :style="{ background: 'transparent' }"></no-data>
-                </template>
-            </bk-table>
-        </div>
+        <FormTable
+            ref="tableForm"
+            :editable="editable"
+            :value="tableData"
+            :columns="cols"
+            :allow-add="false"
+            @update="$emit('update', $event)">
+        </FormTable>
         <separator-select :editable="editable" :value="separator" @change="$emit('update:separator', $event)"></separator-select>
     </div>
 </template>
@@ -99,16 +64,14 @@
     import '@/utils/i18n.js'
     import XLSX from 'xlsx'
     import tools from '@/utils/tools.js'
-    import RenderForm from '../RenderForm.vue'
     import SeparatorSelect from '../SeparatorSelect.vue'
-    import NoData from '@/components/common/base/NoData.vue'
+    import FormTable from '../FormTable/index.vue'
 
     export default {
         name: 'ResourceList',
         components: {
-            RenderForm,
             SeparatorSelect,
-            NoData
+            FormTable
         },
         props: {
             loading: Boolean,
@@ -263,67 +226,8 @@
                 this.$refs.diffAlert.handleClose()
                 this.$emit('handleDiff')
             },
-            // 单元格内的renderform表单属性配置
-            getCellOption (index) {
-                const options = Object.assign({}, this.cellOption)
-                if (index === this.editRow) {
-                    options.formMode = true
-                }
-
-                return options
-            },
-            validateRow (name) {
-                const refs = Object.keys(this.$refs).filter(item => item.startsWith(name))
-                let valid = true
-                refs.forEach(item => {
-                    if (this.$refs[item].length > 0) {
-                        const col = this.$refs[item][1] || this.$refs[item][0]
-                        const result = col.validate() // bk-table 里的body会有两份内容
-                        if (!result) {
-                            valid = false
-                        }
-                    } else {
-                        delete this.$refs[item]
-                    }
-                })
-                return valid
-            },
-            rowEditClick (data) {
-                this.editRow = (this.pagination.current - 1) * this.pagination.limit + data.$index
-            },
-            rowDelClick (row) {
-                const index = (this.pagination.current - 1) * this.pagination.limit + row.$index
-                if (this.dataList.length === 1 && this.pagination.current > 1) {
-                    this.pagination.current -= 1
-                }
-                this.editRow = ''
-                this.tableData.splice(index, 1)
-                this.$emit('update', tools.deepClone(this.tableData))
-            },
-            rowSaveClick (data) {
-                let index = data.index
-                if ('$index' in data) {
-                    index = (this.pagination.current - 1) * this.pagination.limit + data.$index
-                }
-                const valid = this.validateRow(`row_${index}`)
-                if (valid) {
-                    this.editRow = ''
-                    this.$emit('update', tools.deepClone(this.tableData))
-                }
-            },
-            rowCancelClick (data) {
-                this.editRow = ''
-                this.tableData = tools.deepClone(this.value)
-            },
-            handlePageChange (val) {
-                this.pagination.current = val
-            },
             validate () {
-                // 当前正在编辑行时，自动触发保存
-                if (typeof this.editRow === 'number') {
-                    this.rowSaveClick({ 'index': this.editRow })
-                }
-                return this.validateRow(`row_`)
+                this.$refs.tableForm.validate()
             }
         }
     }
@@ -353,12 +257,6 @@
         /deep/ .bk-link-text {
             color: #ccc;
             cursor: not-allowed;
-        }
-    }
-    .data-table {
-        /deep/ .bk-table tbody .cell {
-            padding-top: 16px;
-            padding-bottom: 16px;
         }
     }
 </style>

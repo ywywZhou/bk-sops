@@ -17,7 +17,7 @@
                 v-model="seletedValue"
                 v-loading="loading"
                 v-markTag="{ multiple, hasGroup, seletedValue, options: items }"
-                filterable
+                :filterable="!formTable"
                 default-first-option
                 :clearable="clearable"
                 popper-class="tag-component-popper"
@@ -70,7 +70,8 @@
                     {{ $t('清除') }}
                 </bk-button>
             </p>
-            <span v-show="!validateInfo.valid" class="common-error-tip error-info">{{validateInfo.message}}</span>
+            <!--编辑式表格内组件不展示校验失败-->
+            <span v-show="!validateInfo.valid && !formTable" class="common-error-tip error-info">{{validateInfo.message}}</span>
         </div>
         <span v-else class="rf-view-value">{{viewValue}}</span>
     </div>
@@ -180,6 +181,11 @@
             required: false,
             default: gettext('无数据'),
             desc: 'tips when data is empty'
+        },
+        formTable: {
+            type: Boolean,
+            required: false,
+            default: false
         }
     }
     export default {
@@ -382,6 +388,10 @@
                     this.updateForm([...new Set(setArr)])
                 }
                 this.$refs.selectComp.blur()
+            },
+            onFocus () {
+                this.$refs.selectComp.focus()
+                this.$refs.selectComp.visible = true
             }
         }
     }

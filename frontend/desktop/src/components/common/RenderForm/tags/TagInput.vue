@@ -14,6 +14,7 @@
         <div class="rf-form-wrapper">
             <template v-if="formMode">
                 <el-input
+                    ref="inputComp"
                     type="text"
                     v-model="inputValue"
                     :disabled="!editable || disabled"
@@ -37,7 +38,8 @@
             </template>
             <span v-else class="rf-view-value">{{ viewValue }}</span>
         </div>
-        <span v-show="!validateInfo.valid" class="common-error-tip error-info">{{ validateInfo.message }}</span>
+        <!--编辑式表格内组件不展示校验失败-->
+        <span v-show="!validateInfo.valid && !formTable" class="common-error-tip error-info">{{ validateInfo.message }}</span>
     </div>
 </template>
 <script>
@@ -76,6 +78,11 @@
             type: Boolean,
             default: false,
             inner: true
+        },
+        formTable: {
+            type: Boolean,
+            required: false,
+            default: false
         }
     }
     export default {
@@ -156,6 +163,9 @@
                 const replacedValue = this.value.replace(VAR_REG, val)
                 this.updateForm(replacedValue)
                 this.isListOpen = false
+            },
+            onFocus () {
+                this.$refs.inputComp.focus()
             }
         }
     }
