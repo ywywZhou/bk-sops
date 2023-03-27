@@ -227,7 +227,7 @@
                 this.$emit('handleDiff')
             },
             validate () {
-                this.$refs.tableForm.validate()
+                return this.$refs.tableForm.validate()
             }
         }
     }

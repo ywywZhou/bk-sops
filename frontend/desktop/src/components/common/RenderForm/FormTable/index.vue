@@ -12,7 +12,6 @@
                 :width="column.width"
                 :min-width="column.min_width"
                 :index="columnIndex"
-                show-overflow-tooltip
                 :render-header="renderTableHeader"
                 :prop="column.tag_code"
                 :fixed="column.tag_code === 'tb_btns' ? 'right' : false"
@@ -65,11 +64,11 @@
                     <div v-else class="cell-operate">
                         <i
                             v-if="allowAdd"
-                            :class="['bk-icon icon-plus-circle-shape add-icon mr15', { 'editable': !editable }]"
+                            :class="['bk-icon icon-plus-circle-shape add-icon mr15', { 'disabled': !editable }]"
                             @click="rowAddClick($index)">
                         </i>
                         <i
-                            :class="['bk-icon icon-minus-circle-shape delete-icon', { 'editable': !editable }]"
+                            :class="['bk-icon icon-minus-circle-shape delete-icon', { 'disabled': !editable }]"
                             @click="rowDelClick($index)">
                         </i>
                     </div>
@@ -208,6 +207,7 @@
                 })
             },
             rowAddClick (index) {
+                if (!this.editable) return
                 const originData = {}
                 this.columnList.forEach(item => {
                     let value = ''
@@ -227,6 +227,7 @@
                 this.$emit('update', tools.deepClone(this.dataList))
             },
             rowDelClick ($index) {
+                if (!this.editable) return
                 const index = (this.pagination.current - 1) * this.pagination.limit + $index
                 if (this.tableList.length === 1 && this.pagination.current > 1) {
                     this.pagination.current -= 1
@@ -260,7 +261,7 @@
     .form-table {
         .bk-table {
             .hover-row > td {
-                background-color: #fff;
+                background-color: #fff !important;
             }
             td, th.is-leaf {
                 border-right: 1px solid #dfe0e5;
@@ -307,6 +308,11 @@
             }
             .bk-table-fixed-right {
                 right: 0;
+            }
+            .bk-table-body tr:first-child {
+                .cell-content {
+                    top: 0px;
+                }
             }
         }
     }

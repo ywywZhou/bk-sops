@@ -5,7 +5,7 @@
         </p>
         <!--如果存在二级表头, 批量编辑放在二级表头, 否则放在一级表头-->
         <bk-popover
-            v-if="editable && !scheme.children && scheme.tag_code !== 'tb_btns'"
+            v-if="editable && !scheme.children && scheme.batch_edit"
             ref="batchUpdatePopover"
             placement="bottom"
             theme="light"

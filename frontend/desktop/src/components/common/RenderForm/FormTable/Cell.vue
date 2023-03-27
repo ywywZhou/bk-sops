@@ -32,7 +32,7 @@
             always
             :width="`${column.width + (column.index === 0 ? 0 : 1)}`"
             :arrow="false"
-            :offset="`${column.index === 0 ? 0 : -1},-13px`"
+            :offset="`${column.index === 0 ? 0 : -1},${index === 0 ? '-13px' : '-14px'}`"
             :duration="0"
             class="cell-component-tippy"
             ext-cls="cell-component-tippy-popper">
@@ -295,8 +295,8 @@
             left: -1px;
             right: -1px;
             bottom: -1px;
-            height: 44px;
-            line-height: 42px;
+            top: -1px;
+            line-height: 44px;
             border: 1px solid transparent;
             padding: 0 10px;
             overflow: hidden;
@@ -335,15 +335,22 @@
             }
             &.change-cell {
                 background: #fff3e1;
-                border-color: #dfe0e5;
             }
             &.add-cell {
                 background: #f2fff4;
-                border-color: #dfe0e5;
             }
             &.valid-error {
                 background: #fff0f0;
-                border-color: #dfe0e5;
+            }
+            &.disabled,
+            &.change-cell,
+            &.add-cell,
+            &.valid-error {
+                left: 0;
+                right: 0;
+                bottom: 0;
+                top: 0;
+                border: none;
             }
         }
         .cell-component-tippy,
