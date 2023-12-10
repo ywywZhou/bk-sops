@@ -12,8 +12,9 @@
 <template>
     <div class="full-code-editor" :class="{ 'full-status': isFullScreen }">
         <div class="tool-area">
+            <slot name="tool"></slot>
             <i
-                class="bk-icon icon-copy mr20"
+                class="bk-icon icon-copy-shape mr20"
                 v-bk-tooltips="{
                     boundary: 'window',
                     content: $t('复制')
