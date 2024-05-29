@@ -219,6 +219,10 @@ const store = new Vuex.Store({
          */
         getIamUrl ({ commit }, data) {
             return axios.post('iam/api/apply_perms_url/', data).then(response => response.data)
+        },
+        // 退出登录
+        logout () {
+            return axios.get('logout').then(response => response.data)
         }
     },
     modules
